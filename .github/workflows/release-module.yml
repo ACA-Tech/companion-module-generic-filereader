@@ -33,7 +33,25 @@ jobs:
       - name: Build package
         run: yarn companion-module-build
 
+      - name: Locate built package
+        id: pkg
+        run: |
+          built=$(find . -maxdepth 1 -name '*.tgz' | head -n 1)
+          if [ -z "$built" ]; then
+            echo "No .tgz was produced by companion-module-build. Directory contents:"
+            ls -la
+            exit 1
+          fi
+          target="generic-filereader-${GITHUB_REF_NAME#v}.tgz"
+          if [ "$built" != "./$target" ]; then
+            mv "$built" "$target"
+          fi
+          echo "Built package: $target"
+          echo "file=$target" >> "$GITHUB_OUTPUT"
+
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" generic-filereader-*.tgz --generate-notes
+        run: |
+          gh release create "$GITHUB_REF_NAME" "${{ steps.pkg.outputs.file }}" \
+            --prerelease --generate-notes
