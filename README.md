@@ -1,34 +1,66 @@
-# companion-module-generic-filereader
-See [HELP.md](./HELP.md) and [LICENSE](./LICENSE)
+# companion-module-generic-filereader — ACA production build
+
+See [HELP.md](./companion/HELP.md) and [LICENSE](./LICENSE)
+
+This is the Atheist Community of Austin's build of the Generic File Reader module.
+It is upstream `bitfocus/companion-module-generic-filereader` plus two changes that
+our live show system depends on:
+
+1. **Companion variables in the configured file path.** Lets one connection follow a
+   path that changes at runtime — our show-picker button repoints the readers at the
+   current show's text directory. Upstream treats `$(custom:x)/f.txt` as a literal
+   filename. Offered upstream as
+   [PR #35](https://github.com/bitfocus/companion-module-generic-filereader/pull/35),
+   which closes upstream issue #14.
+2. **Polling recovery.** Upstream stops polling permanently when the file goes
+   missing, never retries if the file is absent at startup, and reports the
+   connection as healthy even when it has failed. Offered upstream as
+   [PR #36](https://github.com/bitfocus/companion-module-generic-filereader/pull/36).
+
+Each change is also on its own branch (`feature/variables-in-file-path`,
+`fix/polling-recovery`), rebased on upstream `main`, which is what the PRs point at.
+This `aca/production` branch is the combined build we actually run.
+
+## Why this exists
+
+If this module is ever reinstalled or updated from the Companion module store, both
+changes are lost, and the failure is quiet: captions and lower-third names simply stop
+following the show picker while the connections still show green. The six File Reader
+connections on the production machine are therefore set to update policy **Manual** so
+Companion never offers to replace this build.
+
+If upstream merges the PRs above and releases a version containing them, switching to
+the official release is the right move — this fork stops being necessary.
+
+## Building an installable package
+
+Push a tag beginning with `v` and GitHub Actions builds the module package and attaches
+it to a release:
+
+```
+git tag v2.2.2-beta.2
+git push origin v2.2.2-beta.2
+```
+
+Download the `generic-filereader-<version>.tgz` from the
+[Releases](https://github.com/ACA-Tech/companion-module-generic-filereader/releases)
+page. In Companion, open **Modules**, use *import module package*, then select that
+version on each File Reader connection.
+
+Keep the version string matching what is installed in production so the rebuilt package
+is a drop-in replacement.
 
 ## Version History
+
+### 2.2.2-beta.2 (2026-07-21)
+* Fix: Continue polling after a configured file path becomes unavailable
+* Fix: Automatically restore the connection status when the file becomes available again
+* Fix: Replace the existing polling timer when file reading is restarted
+
+### 2.2.2-beta.1 (2026-07-16)
+* Feature: Allow Companion variables in the configured file path
+* Fix: Resolve variables in the configured path when reading a specific line
 
 ### 2.2.1 (2025-06-26)
 * Bugfix: Read File Now action was not updating the module variables
 * Chore: Bump Companion-base to 1.4.3
-* Chore: Bump Companion-tools to 1.5.1
-
-### 2.2.0 (2025-05-22)
-* Feature: Extend exist check to include if file is readable
-* Change: Repeated file read interval now need to be at least 1000ms
-* Bugfix: Rewrite all file handling functions to be async and handle returns properly
-* Chore: Bump nanoid to 3.3.8
-* Chore: Bump cross-span to 7.0.6
-* Chore: Bump micromatch to 4.0.8
-* Chore: Bump webpack to 5.94.0
-
-### 2.1.0 (2024-08-23)
-* Feature: Add feedback if file exists
-* Chore: Bump tar to 6.2.1
-* Chore: Bump braces to 3.0.3
-
-### 2.0.1 (2023-07-22)
-* Feature: Add read line action
-* Chore: Bump word-wrap to 1.2.4
-* Chore: Bump semver to 6.3.1
-
-### 2.0.0 (2023-05-14)
-* Major: Rewrite for Companion v3
-
-### 1.0.0 (2022-11-12)
-* Initial Release
